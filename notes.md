@@ -1,7 +1,13 @@
 # 2025-09-23
-Creating and more refine JSON response. First entry is a pretty string. 
+Creating and more refined JSON response. First entry is a pretty string. 
+
+"Scenario" object create. Will use to pass to "DetermineAction" function
+
+Scenario object creation re-factored in helper function.
 
 Committing before working on "recommended action"
+
+
 
 
 # 2025-09-22

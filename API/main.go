@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
-	"encoding/json"
 )
 
 type card struct {
@@ -70,13 +70,12 @@ func (s *shoe) create() {
 	s.deal(1)
 }
 
-
 func (s *shoe) deal(num uint) []card {
-	if num == 0  {
+	if num == 0 {
 		return nil
 	}
 	n := int(num)
-	
+
 	dealt := s.cards[:n]
 	s.cards = s.cards[n:]
 
@@ -91,10 +90,10 @@ type game struct {
 
 func (g *game) dealUpCards() {
 	g.shoe.create()
-	
+
 	g.playerCards = make([]card, 2)
 	g.dealerCards = make([]card, 2)
-	
+
 	// Player
 	g.playerCards[0] = g.shoe.deal(1)[0]
 	// Dealer
@@ -106,6 +105,7 @@ func (g *game) dealUpCards() {
 
 }
 
+// returns: hand total, isSoft, isBlackJack
 func evaluateHand(h []card) (int, bool, bool) {
 	aces := 0
 	total := 0
@@ -149,40 +149,55 @@ func isSoft(h []card) bool {
 	return soft
 }
 
-func main() {
-    g := game{}
-    g.dealUpCards()
+// BuildScenario constructs the JSON-ready payload from the current game state.
+// Assumes you already have: isBlackJack, isSoft, getCardsValue, and card.GetString().
+func BuildScenario(g *game) Scenario {
+	// dealer hole card (may not be dealt yet)
+	holeVal := 0
+	if len(g.dealerCards) > 1 {
+		holeVal = g.dealerCards[1].value
+	}
 
-    sc := Scenario{
-	Dealer: DealerInfo{
-		PrettyString:  []string{ g.dealerCards[0].GetString(), "?" },
-		UpCardValue:   g.dealerCards[0].value, 
-		HoleCardValue: g.dealerCards[1].value,                           
-		IsBlackJack:   isBlackJack(g.dealerCards), 
-	},
-	Player: PlayerInfo{
-		PrettyString: []string{
-			g.playerCards[0].GetString(),
-			g.playerCards[1].GetString(),
+	return Scenario{
+		Dealer: DealerInfo{
+			PrettyString:  []string{g.dealerCards[0].GetString(), "?"}, // show "?" in trainer mode
+			UpCardValue:   g.dealerCards[0].value,
+			HoleCardValue: holeVal,
+			IsBlackJack:   isBlackJack(g.dealerCards),
 		},
-		Card1Value:  g.playerCards[0].value,
-		Card2Value:  g.playerCards[1].value,
-		PlayerTotal: getCardsValue(g.playerCards), // soft-aware total
-		IsSoft:      isSoft(g.playerCards),
-		IsBlackJack: isBlackJack(g.playerCards),
-	},
-	CorrectAction: ActionHit,
+		Player: PlayerInfo{
+			PrettyString: []string{
+				g.playerCards[0].GetString(),
+				g.playerCards[1].GetString(),
+			},
+			Card1Value:  g.playerCards[0].value,
+			Card2Value:  g.playerCards[1].value,
+			PlayerTotal: getCardsValue(g.playerCards),
+			IsSoft:      isSoft(g.playerCards),
+			IsBlackJack: isBlackJack(g.playerCards),
+		},
+		CorrectAction: ActionHit, // TODO: replace with determineCorrectAction(...) later
+	}
 }
 
-    b, err := json.MarshalIndent(sc, "", "  ")
-    if err != nil {
-        panic(err)
-    }
-   
+func determineCorrectAction() {
+	// TO DO
+}
+
+func main() {
+	g := game{}
+	g.dealUpCards()
+
+	sc := BuildScenario(&g)
+	b, err := json.MarshalIndent(sc, "", "  ")
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(string(b))
-	
+
 }
 
+// JSON objects required:
 
 // Top-level payload
 type Scenario struct {
@@ -204,7 +219,7 @@ type PlayerInfo struct {
 	PrettyString []string `json:"prettyString"` // e.g. ["10♦","4♣"]
 	Card1Value   int      `json:"card1Value"`
 	Card2Value   int      `json:"card2Value"`
-	PlayerTotal  int      `json:"playerTotal"`  // computed hand total (respecting soft rules)
+	PlayerTotal  int      `json:"playerTotal"` // computed hand total (respecting soft rules)
 	IsSoft       bool     `json:"isSoft"`
 	IsBlackJack  bool     `json:"isBlackJack"`
 }
@@ -212,13 +227,10 @@ type PlayerInfo struct {
 type CorrectAction string
 
 const (
-	ActionHit    CorrectAction = "HIT"
-	ActionStand  CorrectAction = "STAND"
-	ActionDouble CorrectAction = "DOUBLE"
-	ActionSplit  CorrectAction = "SPLIT"
-	ActionSurrender  CorrectAction = "SURRENDER"
-	ActionNone CorrectAction = "NONE"
+	ActionHit       CorrectAction = "HIT"
+	ActionStand     CorrectAction = "STAND"
+	ActionDouble    CorrectAction = "DOUBLE"
+	ActionSplit     CorrectAction = "SPLIT"
+	ActionSurrender CorrectAction = "SURRENDER"
+	ActionNone      CorrectAction = "NONE"
 )
-
-
-
