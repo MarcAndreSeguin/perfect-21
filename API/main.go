@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"encoding/json"
 )
 
 type card struct {
@@ -98,10 +99,30 @@ func (g *game) dealUpCards() {
 }
 
 func main() {
-	game := game{}
-	game.dealUpCards()
-	
-	fmt.Printf("Dealer upcard: %+v\n", game.dealerCards[0].GetString())
-	fmt.Printf("Player cards: %+v %+v\n", game.playerCards[0].GetString(), game.playerCards[1].GetString())
+    g := game{}
+    g.dealUpCards()
+
+    type Scenario struct {
+        Dealer []string `json:"dealer"`
+        Player   []string `json:"player"`
+    }
+
+    sc := Scenario{
+        Dealer: []string{
+            g.dealerCards[0].GetString(),
+            "?", // hole is always "?" for the trainer
+        },
+        Player: []string{
+            g.playerCards[0].GetString(),
+            g.playerCards[1].GetString(),
+        },
+    }
+
+    b, err := json.MarshalIndent(sc, "", "  ")
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(string(b))
 }
+
 
