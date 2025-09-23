@@ -110,7 +110,6 @@ func evaluateHand(h []card) (int, bool, bool, bool) {
 	aces := 0
 	total := 0
 	isSoft := false
-	isPair := false
 
 	for _, card := range h {
 		if card.value == 1 {
@@ -132,7 +131,8 @@ func evaluateHand(h []card) (int, bool, bool, bool) {
 	}
 
 	isBlackjack := total == 21 && len(h) == 2
-	isPair = (h[0].value == h[1].value)
+	isTenVal := func(v int) bool { return v == 10 || v == 11 || v == 12 || v == 13 }
+	isPair := len(h) == 2 && (h[0].value == h[1].value || (isTenVal(h[0].value) && isTenVal(h[1].value)))
 	return total, isSoft, isBlackjack, isPair
 }
 
@@ -156,32 +156,25 @@ func isPair(h []card) bool {
 	return pair
 }
 
-
-
 // BuildScenario constructs the JSON-ready payload from the current game state.
 // Assumes you already have: isBlackJack, isSoft, getCardsValue, and card.GetString().
 func BuildScenario(g *game) Scenario {
-	// dealer hole card (may not be dealt yet)
-	holeVal := 0
-	if len(g.dealerCards) > 1 {
-		holeVal = g.dealerCards[1].value
-	}
-
 	return Scenario{
 		Dealer: DealerInfo{
-			PrettyString:  []string{g.dealerCards[0].GetString(), "?"}, // show "?" in trainer mode
-			UpCardValue:   g.dealerCards[0].value,
-			HoleCardValue: holeVal,
-			IsBlackJack:   isBlackJack(g.dealerCards),
+			PrettyString: []string{g.dealerCards[0].GetString(), "?"}, // show "?" in trainer mode
+			UpCard:       g.dealerCards[0].value,
+			HoleCard:     g.dealerCards[1].value,
+			IsBlackJack:  isBlackJack(g.dealerCards),
 		},
 		Player: PlayerInfo{
 			PrettyString: []string{
 				g.playerCards[0].GetString(),
 				g.playerCards[1].GetString(),
 			},
-			Card1Value:  g.playerCards[0].value,
-			Card2Value:  g.playerCards[1].value,
+			Card1:       g.playerCards[0].value,
+			Card2:       g.playerCards[1].value,
 			PlayerTotal: getCardsValue(g.playerCards),
+			IsPair:      isPair(g.playerCards),
 			IsSoft:      isSoft(g.playerCards),
 			IsBlackJack: isBlackJack(g.playerCards),
 		},
@@ -190,19 +183,17 @@ func BuildScenario(g *game) Scenario {
 }
 
 func determineCorrectAction(g *game) CorrectAction {
-	// TO DO
-	
+	// TO DO: Lookup the perfect strategy in JSON file
+
 	// dealer BJ or player BJ: NONE
-	if (isBlackJack(g.dealerCards) || isBlackJack(g.playerCards)) { return ActionNone }
-	
+	if isBlackJack(g.dealerCards) || isBlackJack(g.playerCards) {
+		return ActionNone
+	}
+
 	// player pair
-	if (isPair(g.playerCards)) { // TO DO
-	}
-	// if soft
-	if (isSoft(g.playerCards)) { // TO DO
-	}
-	// if hard
-	else { // TO DO
+	if isPair(g.playerCards) { // TO DO
+	} else if isSoft(g.playerCards) { // TO DO
+	} else { // TO DO
 	}
 	return ActionNone // placeholder return to avoid errors
 }
@@ -231,17 +222,17 @@ type Scenario struct {
 
 // Dealer sub-object
 type DealerInfo struct {
-	PrettyString  []string `json:"prettyString"`  // e.g. ["8♦","?"]
-	UpCardValue   int      `json:"upCardValue"`   // 2..11 (Ace = 11 or 1; choose your convention)
-	HoleCardValue int      `json:"holeCardValue"` // hidden value if you precompute; else 0
-	IsBlackJack   bool     `json:"isBlackJack"`
+	PrettyString []string `json:"prettyString"` // e.g. ["8♦","?"]
+	UpCard       int      `json:"upCard"`       // 2..11 (Ace = 11 or 1; choose your convention)
+	HoleCard     int      `json:"holeCard"`     // hidden value if you precompute; else 0
+	IsBlackJack  bool     `json:"isBlackJack"`
 }
 
 // Player sub-object
 type PlayerInfo struct {
 	PrettyString []string `json:"prettyString"` // e.g. ["10♦","4♣"]
-	Card1Value   int      `json:"card1Value"`
-	Card2Value   int      `json:"card2Value"`
+	Card1        int      `json:"card1"`
+	Card2        int      `json:"card2"`
 	PlayerTotal  int      `json:"playerTotal"` // computed hand total (respecting soft rules)
 	IsPair       bool     `json:"isPair"`
 	IsSoft       bool     `json:"isSoft"`
