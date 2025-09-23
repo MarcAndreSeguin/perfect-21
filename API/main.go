@@ -106,10 +106,11 @@ func (g *game) dealUpCards() {
 }
 
 // returns: hand total, isSoft, isBlackJack
-func evaluateHand(h []card) (int, bool, bool) {
+func evaluateHand(h []card) (int, bool, bool, bool) {
 	aces := 0
 	total := 0
 	isSoft := false
+	isPair := false
 
 	for _, card := range h {
 		if card.value == 1 {
@@ -131,23 +132,31 @@ func evaluateHand(h []card) (int, bool, bool) {
 	}
 
 	isBlackjack := total == 21 && len(h) == 2
-	return total, isSoft, isBlackjack
+	isPair = (h[0].value == h[1].value)
+	return total, isSoft, isBlackjack, isPair
 }
 
 func isBlackJack(h []card) bool {
-	_, _, bj := evaluateHand(h)
+	_, _, bj, _ := evaluateHand(h)
 	return bj
 }
 
 func getCardsValue(h []card) int {
-	total, _, _ := evaluateHand(h)
+	total, _, _, _ := evaluateHand(h)
 	return total
 }
 
 func isSoft(h []card) bool {
-	_, soft, _ := evaluateHand(h)
+	_, soft, _, _ := evaluateHand(h)
 	return soft
 }
+
+func isPair(h []card) bool {
+	_, _, _, pair := evaluateHand(h)
+	return pair
+}
+
+
 
 // BuildScenario constructs the JSON-ready payload from the current game state.
 // Assumes you already have: isBlackJack, isSoft, getCardsValue, and card.GetString().
@@ -183,15 +192,18 @@ func BuildScenario(g *game) Scenario {
 func determineCorrectAction(g *game) CorrectAction {
 	// TO DO
 	
-	// if dealer BJ: NONE
-	// if player BJ: NONE
-
-	// if pair
-
+	// dealer BJ or player BJ: NONE
+	if (isBlackJack(g.dealerCards) || isBlackJack(g.playerCards)) { return ActionNone }
+	
+	// player pair
+	if (isPair(g.playerCards)) { // TO DO
+	}
 	// if soft
-
+	if (isSoft(g.playerCards)) { // TO DO
+	}
 	// if hard
-
+	else { // TO DO
+	}
 	return ActionNone // placeholder return to avoid errors
 }
 
@@ -231,6 +243,7 @@ type PlayerInfo struct {
 	Card1Value   int      `json:"card1Value"`
 	Card2Value   int      `json:"card2Value"`
 	PlayerTotal  int      `json:"playerTotal"` // computed hand total (respecting soft rules)
+	IsPair       bool     `json:"isPair"`
 	IsSoft       bool     `json:"isSoft"`
 	IsBlackJack  bool     `json:"isBlackJack"`
 }
