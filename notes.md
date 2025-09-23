@@ -7,6 +7,9 @@ Scenario object creation re-factored in helper function.
 
 Committing before working on "recommended action"
 
+Perfect strategy PDF downloaded and added to repo. 
+
+Resource: https://www.blackjackapprenticeship.com/blackjack-strategy-charts/
 
 
 

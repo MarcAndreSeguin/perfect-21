@@ -176,12 +176,23 @@ func BuildScenario(g *game) Scenario {
 			IsSoft:      isSoft(g.playerCards),
 			IsBlackJack: isBlackJack(g.playerCards),
 		},
-		CorrectAction: ActionHit, // TODO: replace with determineCorrectAction(...) later
+		CorrectAction: determineCorrectAction(g), // TODO: replace with determineCorrectAction(...) later
 	}
 }
 
-func determineCorrectAction() {
+func determineCorrectAction(g *game) CorrectAction {
 	// TO DO
+	
+	// if dealer BJ: NONE
+	// if player BJ: NONE
+
+	// if pair
+
+	// if soft
+
+	// if hard
+
+	return ActionNone // placeholder return to avoid errors
 }
 
 func main() {
