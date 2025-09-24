@@ -1,15 +1,18 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"math"
-	"embed"
+	"math/rand"
 )
 
 //go:embed perfect21-strategy.json
 var f embed.FS
+
+var tbl Table
+
 
 
 type card struct {
@@ -171,18 +174,18 @@ func isPair(h []card) bool {
 func BuildScenario(g *game) Scenario {
 	return Scenario{
 		Dealer: DealerInfo{
-			PrettyString: []string{g.dealerCards[0].getString(), "?"}, // show "?" in trainer mode
-			UpCardValue:       getCardValue(g.dealerCards[0]),
-			HoleCardValue:     getCardValue(g.dealerCards[1]),
-			IsBlackJack:  isBlackJack(g.dealerCards),
+			PrettyString:  []string{g.dealerCards[0].getString(), "?"}, // show "?" in trainer mode
+			UpCardValue:   getCardValue(g.dealerCards[0]),
+			HoleCardValue: getCardValue(g.dealerCards[1]),
+			IsBlackJack:   isBlackJack(g.dealerCards),
 		},
 		Player: PlayerInfo{
 			PrettyString: []string{
 				g.playerCards[0].getString(),
 				g.playerCards[1].getString(),
 			},
-			Card1Value:       getCardValue(g.playerCards[0]),
-			Card2Value:       getCardValue(g.playerCards[1]),
+			Card1Value:  getCardValue(g.playerCards[0]),
+			Card2Value:  getCardValue(g.playerCards[1]),
 			PlayerTotal: getCardsValue(g.playerCards),
 			IsPair:      isPair(g.playerCards),
 			IsSoft:      isSoft(g.playerCards),
@@ -193,22 +196,55 @@ func BuildScenario(g *game) Scenario {
 }
 
 func determineCorrectAction(g *game) CorrectAction {
-	// TO DO: Lookup the perfect strategy in JSON file
-
-	// dealer BJ or player BJ: NONE
+	// Early-out: any natural blackjack → no action needed
 	if isBlackJack(g.dealerCards) || isBlackJack(g.playerCards) {
 		return ActionNone
 	}
 
-	// player pair
-	if isPair(g.playerCards) { // TO DO
-	} else if isSoft(g.playerCards) { // TO DO
-	} else { // TO DO
+	// Normalize dealer upcard to table key: "1" for Ace, "10" for T/J/Q/K, "2".."9" otherwise
+	dk := fmt.Sprintf("%d", getCardValue(g.dealerCards[0]))
+
+	// Pairs first
+	if isPair(g.playerCards) && len(g.playerCards) == 2 {
+		v1 := getCardValue(g.playerCards[0])
+		v2 := getCardValue(g.playerCards[1])
+		pk := fmt.Sprintf("%d,%d", v1, v2)
+		if row, ok := tbl.Pairs[pk]; ok {
+			if a, ok := row[dk]; ok {
+				return CorrectAction(a)
+			}
+		}
 	}
-	return ActionNone // placeholder return to avoid errors
+
+	// Soft totals next
+	if isSoft(g.playerCards) {
+		sk := fmt.Sprintf("%d", getCardsValue(g.playerCards)) // "13".."20"
+		if row, ok := tbl.Soft[sk]; ok {
+			if a, ok := row[dk]; ok {
+				return CorrectAction(a)
+			}
+		}
+	}
+
+	// Hard totals last
+	hk := fmt.Sprintf("%d", getCardsValue(g.playerCards)) // "5".."20"
+	if row, ok := tbl.Hard[hk]; ok {
+		if a, ok := row[dk]; ok {
+			return CorrectAction(a)
+		}
+	}
+
+	return ActionNone
+}
+
+
+func buildStrategy() {
+	strategy, _ := f.ReadFile("perfect21-strategy.json")
+	if err := json.Unmarshal(strategy, &tbl); err != nil { fmt.Println("error creating strategy") }
 }
 
 func main() {
+	buildStrategy()
 	g := game{}
 	g.dealUpCards()
 
@@ -219,11 +255,9 @@ func main() {
 	}
 	fmt.Println(string(b))
 
-	data, _ := f.ReadFile("perfect21-strategy.json")
-	print(string(data))
 }
 
-//-- JSON objects required //
+//-- JSON response //
 
 // Top-level payload
 type Scenario struct {
@@ -234,17 +268,17 @@ type Scenario struct {
 
 // Dealer sub-object
 type DealerInfo struct {
-	PrettyString []string `json:"prettyString"` // e.g. ["8♦","?"]
-	UpCardValue       int      `json:"upCardValue"`       // 2..11 (Ace = 11 or 1; choose your convention)
-	HoleCardValue     int      `json:"holeCardValue"`     // hidden value if you precompute; else 0
-	IsBlackJack  bool     `json:"isBlackJack"`
+	PrettyString  []string `json:"prettyString"`  // e.g. ["8♦","?"]
+	UpCardValue   int      `json:"upCardValue"`   // 2..11 (Ace = 11 or 1; choose your convention)
+	HoleCardValue int      `json:"holeCardValue"` // hidden value if you precompute; else 0
+	IsBlackJack   bool     `json:"isBlackJack"`
 }
 
 // Player sub-object
 type PlayerInfo struct {
 	PrettyString []string `json:"prettyString"` // e.g. ["10♦","4♣"]
-	Card1Value        int      `json:"card1Value"`
-	Card2Value        int      `json:"card2Value"`
+	Card1Value   int      `json:"card1Value"`
+	Card2Value   int      `json:"card2Value"`
 	PlayerTotal  int      `json:"playerTotal"` // computed hand total (respecting soft rules)
 	IsPair       bool     `json:"isPair"`
 	IsSoft       bool     `json:"isSoft"`
@@ -261,3 +295,22 @@ const (
 	ActionSurrender CorrectAction = "SURRENDER"
 	ActionNone      CorrectAction = "NONE"
 )
+
+// -- JSON Strategy
+
+type Meta struct {
+  Decks             int    `json:"decks"`
+  DealerHitsSoft17  bool   `json:"dealerHitsSoft17"`
+  DasAllowed        bool   `json:"dasAllowed"`
+  SurrenderAllowed  bool   `json:"surrenderAllowed"`
+  SurrenderType     string `json:"surrenderType"`
+  Notes             string `json:"notes"`
+}
+
+type Table struct {
+  Meta  Meta                          `json:"meta"`
+  Pairs map[string]map[string]string  `json:"pairs"`
+  Soft  map[string]map[string]string  `json:"soft"`
+  Hard  map[string]map[string]string  `json:"hard"`
+}
+

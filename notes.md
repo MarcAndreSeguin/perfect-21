@@ -11,6 +11,36 @@ Perfect strategy PDF downloaded and added to repo.
 
 Resource: https://www.blackjackapprenticeship.com/blackjack-strategy-charts/
 
+Created the recommended action function. 
+
+Now JSON response "works as is". Will work on the API next. 
+
+(thinking: probably only need a GET route ... frontend will be like a quiz)
+
+{
+  "dealer": {
+    "prettyString": [
+      "4♥",
+      "?"
+    ],
+    "upCardValue": 4,
+    "holeCardValue": 10,
+    "isBlackJack": false
+  },
+  "player": {
+    "prettyString": [
+      "4♦",
+      "K♥"
+    ],
+    "card1Value": 4,
+    "card2Value": 10,
+    "playerTotal": 14,
+    "isPair": false,
+    "isSoft": false,
+    "isBlackJack": false
+  },
+  "correctAction": "STAND"
+}
 
 
 # 2025-09-22
