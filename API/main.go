@@ -262,13 +262,15 @@ func main() {
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
-			"http://localhost:5173",        // local dev
-			"https://perfect-21.vercel.app/", // add prod origin 
+			"http://localhost:5173",          // local dev
+			"https://perfect-21.vercel.app/", // add prod origin
 			"https://perfect-21-lz9spkr3n-marc-andre-seguins-projects.vercel.app",
 		},
-		AllowMethods: []string{"GET", "OPTIONS"},
-		AllowHeaders: []string{"Content-Type"},
-		MaxAge:       12 * time.Hour,
+		AllowMethods:     []string{"GET", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
 	}))
 
 	r.GET("/play", play)
