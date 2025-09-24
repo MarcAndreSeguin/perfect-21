@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"net/http"
+	"github.com/gin-gonic/gin"
+	// "errors"
 )
 
 //go:embed perfect21-strategy.json
 var f embed.FS
-
-var tbl Table
-
-
+var stratTbl Table
 
 type card struct {
 	value int // 1..13
@@ -209,7 +209,7 @@ func determineCorrectAction(g *game) CorrectAction {
 		v1 := getCardValue(g.playerCards[0])
 		v2 := getCardValue(g.playerCards[1])
 		pk := fmt.Sprintf("%d,%d", v1, v2)
-		if row, ok := tbl.Pairs[pk]; ok {
+		if row, ok := stratTbl.Pairs[pk]; ok {
 			if a, ok := row[dk]; ok {
 				return CorrectAction(a)
 			}
@@ -219,7 +219,7 @@ func determineCorrectAction(g *game) CorrectAction {
 	// Soft totals next
 	if isSoft(g.playerCards) {
 		sk := fmt.Sprintf("%d", getCardsValue(g.playerCards)) // "13".."20"
-		if row, ok := tbl.Soft[sk]; ok {
+		if row, ok := stratTbl.Soft[sk]; ok {
 			if a, ok := row[dk]; ok {
 				return CorrectAction(a)
 			}
@@ -228,7 +228,7 @@ func determineCorrectAction(g *game) CorrectAction {
 
 	// Hard totals last
 	hk := fmt.Sprintf("%d", getCardsValue(g.playerCards)) // "5".."20"
-	if row, ok := tbl.Hard[hk]; ok {
+	if row, ok := stratTbl.Hard[hk]; ok {
 		if a, ok := row[dk]; ok {
 			return CorrectAction(a)
 		}
@@ -237,24 +237,27 @@ func determineCorrectAction(g *game) CorrectAction {
 	return ActionNone
 }
 
-
 func buildStrategy() {
 	strategy, _ := f.ReadFile("perfect21-strategy.json")
-	if err := json.Unmarshal(strategy, &tbl); err != nil { fmt.Println("error creating strategy") }
+	if err := json.Unmarshal(strategy, &stratTbl); err != nil {
+		fmt.Println("error creating strategy")
+	}
 }
 
-func main() {
-	buildStrategy()
+func play(c *gin.Context){
 	g := game{}
 	g.dealUpCards()
 
 	sc := BuildScenario(&g)
-	b, err := json.MarshalIndent(sc, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(b))
+	c.IndentedJSON(http.StatusOK, sc)
+}
 
+func main() {
+	buildStrategy()
+	
+	router := gin.Default()
+	router.GET("/play", play)
+	router.Run("localhost:8080")
 }
 
 //-- JSON response //
@@ -299,18 +302,17 @@ const (
 // -- JSON Strategy
 
 type Meta struct {
-  Decks             int    `json:"decks"`
-  DealerHitsSoft17  bool   `json:"dealerHitsSoft17"`
-  DasAllowed        bool   `json:"dasAllowed"`
-  SurrenderAllowed  bool   `json:"surrenderAllowed"`
-  SurrenderType     string `json:"surrenderType"`
-  Notes             string `json:"notes"`
+	Decks            int    `json:"decks"`
+	DealerHitsSoft17 bool   `json:"dealerHitsSoft17"`
+	DasAllowed       bool   `json:"dasAllowed"`
+	SurrenderAllowed bool   `json:"surrenderAllowed"`
+	SurrenderType    string `json:"surrenderType"`
+	Notes            string `json:"notes"`
 }
 
 type Table struct {
-  Meta  Meta                          `json:"meta"`
-  Pairs map[string]map[string]string  `json:"pairs"`
-  Soft  map[string]map[string]string  `json:"soft"`
-  Hard  map[string]map[string]string  `json:"hard"`
+	Meta  Meta                         `json:"meta"`
+	Pairs map[string]map[string]string `json:"pairs"`
+	Soft  map[string]map[string]string `json:"soft"`
+	Hard  map[string]map[string]string `json:"hard"`
 }
-

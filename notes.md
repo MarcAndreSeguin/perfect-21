@@ -1,4 +1,11 @@
-# 2025-09-23
+# 2025-09-23b
+Created local API (single GET response), single route at /play/ 
+(this was simply a matter of re-factoring some of the code and using GIN)
+
+NEXT
+-Create frontend (vite or nextjs) to quiz user
+
+# 2025-09-23a
 Creating and more refined JSON response. First entry is a pretty string. 
 
 "Scenario" object create. Will use to pass to "DetermineAction" function
