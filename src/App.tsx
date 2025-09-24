@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "./App.css";
+import About from "./components/About.tsx";
+import Details from "./components/Details.tsx";
 
 type GameResponse = Record<string, any> | { error: string } | null;
 
@@ -21,34 +23,25 @@ export default function App() {
     <>
       <h1>Perfect 21</h1>
       <div className="game">
+        <div className="dealerHand">
+          <strong>Dealer:</strong> {game?.dealer?.prettyString?.[0] ?? "—"}{" "}
+          {game?.dealer && "+ ?"}
+        </div>
+
+        <br />
+        <br />
+
+        <div className="playerHand">
+          <strong>Player:</strong>{" "}
+          {game?.player?.prettyString?.join(" ") ?? "—"}
+        </div>
+        {/* ACTION BUTTONS TO DO*/}
+        <br />
         <button onClick={newGame}>Next Hand →</button>
       </div>
 
-      <details className="mt-3">
-        <summary className="cursor-pointer select-none text-sm">
-          Show API Response 
-        </summary>
-        <pre
-          style={{ textAlign: "left" }}
-          className="mt-2 font-mono tabular-nums leading-6 whitespace-pre rounded bg-neutral-950 text-neutral-100 p-4 overflow-auto text-sm"
-        >
-          {game
-            ? JSON.stringify(game, null, 2)
-            : "No data yet. Click Next to fetch."}
-        </pre>
-      </details>
-
-      <p className="about">By Marc-Andre Seguin | 2025 | JazzStack.io</p>
-      <p className="about">
-        Based on H17 perfect strategy by{" "}
-        <a
-          href="https://www.blackjackapprenticeship.com/blackjack-strategy-charts/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          BlackjackApprenticeship.com
-        </a>
-      </p>
+      <Details game={game} />
+      <About />
     </>
   );
 }
