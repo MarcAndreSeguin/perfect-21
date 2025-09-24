@@ -265,6 +265,7 @@ func main() {
 			"http://localhost:5173",          // local dev
 			"https://perfect-21.vercel.app/", // add prod origin
 			"https://perfect-21-lz9spkr3n-marc-andre-seguins-projects.vercel.app",
+			"https://perfect-21-3kopy35d9-marc-andre-seguins-projects.vercel.app",
 		},
 		AllowMethods:     []string{"GET", "HEAD", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
