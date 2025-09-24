@@ -263,7 +263,7 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:5173",          // local dev
-			"https://perfect-21.vercel.app/", // add prod origin
+			"*",
 		},
 		AllowMethods:     []string{"GET", "HEAD", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
