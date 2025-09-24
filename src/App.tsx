@@ -1,12 +1,14 @@
 import { useState } from "react";
 import "./App.css";
-import About from "./components/About.tsx";
-import Details from "./components/Details.tsx";
+import About from "./components/About";
+import Details from "./components/Details";
+import PlayArea from "./components/PlayArea"
 
 type GameResponse = Record<string, any> | { error: string } | null;
 
 export default function App() {
   const [game, setGame] = useState<GameResponse>(null);
+  const g = game as any;
 
   async function newGame() {
     try {
@@ -22,25 +24,16 @@ export default function App() {
   return (
     <>
       <h1>Perfect 21</h1>
-      <div className="game">
-        <div className="dealerHand">
-          <strong>Dealer:</strong> {game?.dealer?.prettyString?.[0] ?? "—"}{" "}
-          {game?.dealer && "+ ?"}
-        </div>
-
-        <br />
-        <br />
-
-        <div className="playerHand">
-          <strong>Player:</strong>{" "}
-          {game?.player?.prettyString?.join(" ") ?? "—"}
-        </div>
+      < PlayArea game={g}/>
+        
         {/* ACTION BUTTONS TO DO*/}
         <br />
         <button onClick={newGame}>Next Hand →</button>
-      </div>
-
+      
+      
+      <br /><br />
       <Details game={game} />
+     
       <About />
     </>
   );
