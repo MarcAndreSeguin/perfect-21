@@ -9,7 +9,9 @@ import (
 	"math/rand"
 	"net/http"
 	// "errors"
+	"github.com/gin-contrib/cors"
 	"os"
+	"time"
 )
 
 //go:embed perfect21-strategy.json
@@ -256,13 +258,25 @@ func play(c *gin.Context) {
 func main() {
 	buildStrategy()
 
-	router := gin.Default()
-	router.GET("/play", play)
+	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:3000",        // local dev
+			"https://perfect-21.vercel.app/", // add prod origin 
+		},
+		AllowMethods: []string{"GET", "OPTIONS"},
+		AllowHeaders: []string{"Content-Type"},
+		MaxAge:       12 * time.Hour,
+	}))
+
+	r.GET("/play", play)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "10000"
 	}
-	router.Run("0.0.0.0:" + port)
+	r.Run("0.0.0.0:" + port)
 
 }
 
