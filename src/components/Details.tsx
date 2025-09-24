@@ -1,4 +1,8 @@
-export default function Details({ game }) {
+type DetailsProps = {
+  game: any; // Replace 'any' with a more specific type if available
+};
+
+export default function Details({ game }: DetailsProps) {
   return (
     <>
       <details className="mt-3">
