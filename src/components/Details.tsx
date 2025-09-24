@@ -1,9 +1,4 @@
-
-type DetailsProps = {
-  game: any; // Replace 'any' with a more specific type if available
-};
-
-function Details({ game }: DetailsProps) {
+export default function Details({ game }) {
   return (
     <>
       <details className="mt-3">
@@ -21,6 +16,4 @@ function Details({ game }: DetailsProps) {
       </details>
     </>
   );
-};
-
-export default Details;
+}

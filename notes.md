@@ -8,7 +8,10 @@ https://perfect-21-api.onrender.com/play
 Created frontend (vite or nextjs) to display JSON response and "pretty cards"
 (on refresh)
 
-Next: "Quiz" component with Vite buttons
+Created Action buttons and logic to "Quiz" (true / false) component with Vite buttons
+
+Deployed on Vercel
+
 
 # 2025-09-23a
 Creating and more refined JSON response. First entry is a pretty string. 

@@ -1,5 +1,4 @@
-
-function About() {
+export default function About() {
   return (
     <>
       <p className="about">By Marc-Andre Seguin | 2025 | JazzStack.io</p>
@@ -16,5 +15,3 @@ function About() {
     </>
   );
 };
-
-export default About;

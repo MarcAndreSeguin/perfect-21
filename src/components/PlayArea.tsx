@@ -1,9 +1,14 @@
-
-type PlayAreaProps = {
-  game: any; // Replace 'any' with a more specific type if available
+type Hand = {
+  prettyString?: string[];
+  isBlackJack?: boolean;
 };
 
-function PlayArea({ game }: PlayAreaProps) {
+type Game = {
+  dealer?: Hand;
+  player?: Hand;
+};
+
+export default function PlayArea({ game }: { game: Game }) {
   return (
     <div className="playArea">
         <div className="dealerHand">
@@ -24,5 +29,3 @@ function PlayArea({ game }: PlayAreaProps) {
       </div> 
   );
 };
-
-export default PlayArea;
