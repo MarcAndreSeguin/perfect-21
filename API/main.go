@@ -4,11 +4,12 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"math"
 	"math/rand"
 	"net/http"
-	"github.com/gin-gonic/gin"
 	// "errors"
+	"os"
 )
 
 //go:embed perfect21-strategy.json
@@ -244,7 +245,7 @@ func buildStrategy() {
 	}
 }
 
-func play(c *gin.Context){
+func play(c *gin.Context) {
 	g := game{}
 	g.dealUpCards()
 
@@ -254,10 +255,15 @@ func play(c *gin.Context){
 
 func main() {
 	buildStrategy()
-	
+
 	router := gin.Default()
 	router.GET("/play", play)
-	router.Run("localhost:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "10000"
+	}
+	router.Run("0.0.0.0:" + port)
+
 }
 
 //-- JSON response //
